@@ -1,68 +1,95 @@
 import os
 import time
-import re
-import json
-from hashlib import sha256
 from flask import Flask, render_template, request, jsonify
 from serialio import SerialIO
 
 app = Flask(__name__)
 
-# Hard-coded password hash (SHA-256 of the secret)
-# Example secret used here: "s3cr3t"
-EXPECTED_HASH = "4e738ca5563c06cfd0018299933d58db1dd8bf97f6973dc99bf6cdc64b5550bd"
+EXPECTED_PW = os.environ.get("FLIPPER_PW")
 
-# device path (override with FLIPPER_DEVICE env if you want)
 DEVICE = os.environ.get(
     "FLIPPER_DEVICE",
     "/dev/serial/by-id/usb-Flipper_Devices_Inc._Flipper_Jamalaki_flip_Jamalaki-if00"
 )
 
+PROJ_NAME = os.environ.get(
+    "PROJ_NAME",
+    ""
+)
+
+COMMAND = os.environ.get(
+    "FLIPPER_CMD",
+    "hello_world"
+)
+
 # Global flipper instance (created at startup below)
 flipper = None
 
-@app.route("/")
+@app.route(f"/{PROJ_NAME}/")
 def index():
     # Provide a tiny status to show whether flipper connected
-    connected = flipper is not None
+    connected = status().get_json()['connected']
     return render_template("index.html", connected=connected, device=DEVICE)
 
-@app.route("/send", methods=["POST"])
+@app.route(f"/{PROJ_NAME}/send", methods=["POST"])
 def send_command():
     """
     Expects JSON:
-      { "hash": "<hex sha256>" }
-
-    If hash matches EXPECTED_HASH, sends "hello_world" and returns device response (or error).
+      { "pw": "pw string" }
     """
     if not request.is_json:
         return jsonify({"ok": False, "error": "Expected JSON"}), 400
 
     data = request.get_json()
-    pw_hash = data.get("hash", "")
-    if not isinstance(pw_hash, str) or len(pw_hash) != 64:
-        return jsonify({"ok": False, "error": "Bad hash format"}), 400
+    pw = data.get("pw", "")
+    if not isinstance(pw, str):
+        return jsonify({"ok": False, "error": "Bad password format"}), 400
 
-    if pw_hash != EXPECTED_HASH:
+    if pw != EXPECTED_PW:
         # failed auth
         return jsonify({"ok": False, "error": "Authentication failed"}), 403
 
-    if flipper is None:
+    if status().get_json()['connected'] is False:
         return jsonify({"ok": False, "error": "Flipper not connected"}), 500
+    
+    if flipper is None:
+        return jsonify({"ok": False, "error": "Internal flipper error"})
 
     try:
-        # send hello_world and wait for response (1.5s)
-        resp = flipper.send_and_wait("hello_world", wait=1.5)
+        # send a chosen command
+        resp = flipper.send_and_wait(COMMAND, wait=3)
         # decode for JSON; safe fallback
         text = resp.decode(errors="replace") if isinstance(resp, (bytes, bytearray)) else str(resp)
         return jsonify({"ok": True, "response": text})
     except Exception as e:
         return jsonify({"ok": False, "error": f"Send failed: {e}"}), 500
 
-@app.route("/status", methods=["GET"])
+@app.route(f"/{PROJ_NAME}/status", methods=["GET"])
 def status():
-    connected = flipper is not None
-    return jsonify({"connected": connected, "device": DEVICE})
+    global flipper
+    # Attempt reconnecting a flipper if not connected
+    if flipper is None:
+        start_flipper()
+        if flipper is None:
+            return jsonify({"connected": False, "device": DEVICE})
+        return jsonify({"connected": True, "device": DEVICE})
+    # Check if the flipper is still connected
+    else:
+        try:
+            resp = flipper.send_and_wait('hello_world', wait=1.5)
+            text = resp.decode(errors="replace") if isinstance(resp, (bytes, bytearray)) else str(resp)
+        except:
+            flipper = None
+            return jsonify({"connected": False, "device": DEVICE})
+        
+        if "hello" not in text:
+            flipper = None
+            return jsonify({"connected": False, "device": DEVICE})
+
+        return jsonify({"connected": True, "device": DEVICE})
+
+
+        
 
 # -------------------------
 # Helper: try to start flipper (called at startup)
@@ -88,16 +115,13 @@ def start_flipper():
 # Start app and flipper instance
 # -------------------------
 if __name__ == "__main__":
-    # Avoid double-creating serial connection due to the reloader. If you want the reloader,
-    # either run with FLASK_DEBUG=0 or let WERKZEUG_RUN_MAIN env logic handle it.
-    # We'll only start the flipper when the process is the 'main' worker.
-    # Werkzeug sets WERKZEUG_RUN_MAIN when reloader forks child; we want to create only once.
     if os.environ.get("WERKZEUG_RUN_MAIN") == "true" or os.environ.get("FLASK_DEBUG") is None:
         start_flipper()
     else:
         # If running under plain `python app.py`, we start the flipper too
         start_flipper()
+    
+    if EXPECTED_PW is None:
+        raise ValueError("Expected password in env")
 
-    # Run Flask. Use debug=False to avoid auto-reload creating multiple serial connections,
-    # or accept the WERKZEUG_RUN_MAIN guard above.
     app.run(host="0.0.0.0", port=5000, debug=False)
