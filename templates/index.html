@@ -179,7 +179,7 @@
 					result.textContent = "Hashing password...";
 					try {
 						result.textContent = "Sending password to server...";
-						const resp = await fetch("/send", {
+						const resp = await fetch("/gate/send", {
 							method: "POST",
 							headers: { "Content-Type": "application/json" },
 							body: JSON.stringify({ password: pw }),
