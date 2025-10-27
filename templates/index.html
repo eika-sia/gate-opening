@@ -182,7 +182,7 @@
 						const resp = await fetch("/send", {
 							method: "POST",
 							headers: { "Content-Type": "application/json" },
-							body: JSON.stringify({ pw: pw }),
+							body: JSON.stringify({ password: pw }),
 						});
 						const j = await resp.json();
 						if (j.ok) {

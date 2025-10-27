@@ -82,7 +82,7 @@ def status():
             flipper = None
             return jsonify({"connected": False, "device": DEVICE})
         
-        if "hello" not in text:
+        if "Hello" not in text:
             flipper = None
             return jsonify({"connected": False, "device": DEVICE})
 
