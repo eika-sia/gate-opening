@@ -35,13 +35,13 @@ def index():
 def send_command():
     """
     Expects JSON:
-      { "pw": "pw string" }
+      { "password": "pw string" }
     """
     if not request.is_json:
         return jsonify({"ok": False, "error": "Expected JSON"}), 400
 
     data = request.get_json()
-    pw = data.get("pw", "")
+    pw = data.get("password", "")
     if not isinstance(pw, str):
         return jsonify({"ok": False, "error": "Bad password format"}), 400
 
