@@ -178,12 +178,11 @@
 
 					result.textContent = "Hashing password...";
 					try {
-						const h = await sha256hex(pw);
-						result.textContent = "Sending hash to server...";
+						result.textContent = "Sending password to server...";
 						const resp = await fetch("/send", {
 							method: "POST",
 							headers: { "Content-Type": "application/json" },
-							body: JSON.stringify({ hash: h }),
+							body: JSON.stringify({ pw: pw }),
 						});
 						const j = await resp.json();
 						if (j.ok) {
