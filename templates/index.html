@@ -90,10 +90,7 @@
 
 			.button-wrapper {
 				display: flex;
-				align-items: center; /* vertically center button relative to input */
-				width: 20%;
-				text-align: center;
-				justify-content: center;
+				align-items: center; /* vertically center the button relative to input */
 			}
 
 			button {
@@ -182,13 +179,13 @@
 					/>
 				</div>
 				<div class="button-wrapper">
-					<button type="submit">Open Gate</button>
+					<button type="submit">Send Command</button>
 				</div>
 			</form>
 
 			<div class="status">
 				<span id="conn" class="connected-dot disconnected"></span>
-				<span id="status-text">Flipper not connected</span>
+				<span id="status-text"></span>
 				<span id="result"></span>
 			</div>
 
@@ -202,45 +199,51 @@
 			const conn = $("conn");
 			const statusText = $("status-text");
 
+			async function updateStatus() {
+				try {
+					const resp = await fetch("/status");
+					if (!resp.ok) throw new Error("Status fetch failed");
+					const data = await resp.json();
+					if (data.connected) {
+						conn.className = "connected-dot connected";
+						statusText.textContent =
+							"Connected to " + (data.device || "device");
+					} else {
+						conn.className = "connected-dot disconnected";
+						statusText.textContent = "Flipper not connected";
+					}
+				} catch {
+					conn.className = "connected-dot disconnected";
+					statusText.textContent = "Flipper not connected";
+				}
+			}
+
+			// Run once on load
+			updateStatus();
+
 			$("form").addEventListener("submit", async (e) => {
 				e.preventDefault();
 				const pw = $("pw").value || "";
 				result.textContent = "Sending...";
 				try {
-					const resp = await fetch("/gate/send", {
+					const resp = await fetch("/send", {
 						method: "POST",
 						headers: { "Content-Type": "application/json" },
 						body: JSON.stringify({ password: pw }),
 					});
 					const j = await resp.json();
 					if (j.ok) {
-						result.textContent = "Success";
+						result.textContent = "Command sent";
 						output.textContent = j.response || "(no response)";
-						conn.className = "connected-dot connected";
-						statusText.textContent = "Connected to device";
 					} else {
-						result.textContent = j.error || "Error";
-						output.textContent = "";
-						conn.className = "connected-dot disconnected";
-						statusText.textContent = "Flipper not connected";
+						result.textContent = "Error";
+						output.textContent = j.error || "Error";
 					}
 
-					const hidden = document.createElement("form");
-					hidden.style.display = "none";
-					hidden.action = "/gate/send";
-					hidden.method = "POST";
-					hidden.innerHTML =
-						'<input name="username" value="flipper-local"><input type="password" name="password" value="' +
-						pw +
-						'">';
-					document.body.appendChild(hidden);
-					hidden.submit();
-					hidden.remove();
+					await updateStatus(); // refresh connected dot
 				} catch (err) {
 					result.textContent = "Client error";
-					output.textContent = "";
-					conn.className = "connected-dot disconnected";
-					statusText.textContent = "Flipper not connected";
+					output.textContent = "Client error: " + err.message;
 				}
 			});
 		</script>
