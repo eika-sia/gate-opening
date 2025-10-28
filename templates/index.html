@@ -201,7 +201,7 @@
 
 			async function updateStatus() {
 				try {
-					const resp = await fetch("/status");
+					const resp = await fetch("/gate/status");
 					if (!resp.ok) throw new Error("Status fetch failed");
 					const data = await resp.json();
 					if (data.connected) {
@@ -226,7 +226,7 @@
 				const pw = $("pw").value || "";
 				result.textContent = "Sending...";
 				try {
-					const resp = await fetch("/send", {
+					const resp = await fetch("/gate/send", {
 						method: "POST",
 						headers: { "Content-Type": "application/json" },
 						body: JSON.stringify({ password: pw }),
