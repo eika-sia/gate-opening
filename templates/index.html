@@ -1,203 +1,248 @@
-<!-- templates/index.html -->
 <!DOCTYPE html>
 <html lang="en">
 	<head>
 		<meta charset="utf-8" />
-		<title>Flipper Web Control</title>
-		<meta name="viewport" content="width=device-width,initial-scale=1" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Front Gate Controller</title>
 		<style>
-			/* simple, slightly stylish UI */
 			:root {
-				--bg: #0f1720;
-				--card: #0b1220;
-				--accent: #6ee7b7;
-				--muted: #9aa6b2;
-				--danger: #ff6b6b;
-				--glass: rgba(255, 255, 255, 0.03);
-				font-family: Inter, ui-sans-serif, system-ui, -apple-system,
-					"Segoe UI", Roboto, "Helvetica Neue", Arial;
+				--bg-start: #0a0611;
+				--bg-mid: #0f0814;
+				--bg-end: #0c0512;
+				--card-bg: #0b0712;
+				--text: #ffffff;
+				--muted: #a79ed0;
+				--accent: #a47edc;
+				--accent-hover: #d0bfff;
+				--border: #3a2f50;
 			}
-			body {
+
+			* {
+				box-sizing: border-box;
 				margin: 0;
+				padding: 0;
+			}
+
+			body {
 				min-height: 100vh;
 				display: flex;
-				align-items: center;
 				justify-content: center;
-				background: linear-gradient(180deg, #061018 0%, #071424 100%);
-				color: #e6eef3;
+				align-items: center;
+				font-family: ui-monospace, SFMono-Regular, Menlo, Monaco,
+					"Roboto Mono", monospace;
+				color: var(--text);
+				background: linear-gradient(
+					135deg,
+					var(--bg-start),
+					var(--bg-mid),
+					var(--bg-end)
+				);
 			}
+
 			.card {
-				width: min(720px, 94vw);
-				background: linear-gradient(180deg, var(--card), #07101a);
-				padding: 22px;
-				border-radius: 12px;
-				box-shadow: 0 10px 30px rgba(2, 6, 23, 0.6);
-				border: 1px solid rgba(255, 255, 255, 0.03);
+				width: min(700px, 90vw);
+				background: var(--card-bg);
+				padding: 28px;
+				border-radius: 10px;
+				border: 1px solid var(--border);
 			}
+
 			h1 {
-				margin: 0 0 8px 0;
-				font-size: 20px;
+				font-size: 22px;
+				color: var(--accent);
+				margin-bottom: 10px;
+			}
+
+			p.lead {
+				color: var(--text);
+				font-size: 13px;
+				margin-bottom: 16px;
+			}
+
+			form {
+				display: flex;
+				gap: 12px;
+				align-items: center;
+			}
+
+			.col {
+				flex: 1;
+			}
+
+			label.small {
+				display: block;
+				font-size: 12px;
+				color: var(--muted);
+				margin-bottom: 6px;
+			}
+
+			input[type="password"] {
+				width: 100%;
+				padding: 10px;
+				border-radius: 6px;
+				border: 1px solid var(--border);
+				background: rgba(255, 255, 255, 0.03);
+				color: var(--text);
+				outline: none;
+				font-family: inherit;
+				font-size: 14px;
+			}
+
+			.button-wrapper {
+				display: flex;
+				align-items: center; /* vertically center button relative to input */
+				width: 20%;
+				text-align: center;
+				justify-content: center;
+			}
+
+			button {
+				background: none;
+				border: none;
+				font-weight: 700;
+				color: var(--accent);
+				font-family: inherit;
+				font-size: 14px;
+				cursor: pointer;
+				padding: 0;
+				border-bottom: 1px solid transparent;
+				transition: border-color 0.2s;
+			}
+
+			button:hover {
+				border-color: var(--accent-hover);
+			}
+
+			.status {
+				margin-top: 14px;
+				color: var(--muted);
+				font-size: 13px;
 				display: flex;
 				gap: 10px;
 				align-items: center;
 			}
-			p.lead {
-				margin: 0 0 18px 0;
-				color: var(--muted);
-				font-size: 13px;
-			}
-			.row {
-				display: flex;
-				gap: 12px;
-			}
-			.col {
-				flex: 1;
-			}
-			input[type="password"] {
-				width: 100%;
-				padding: 10px 12px;
-				border-radius: 8px;
-				border: 1px solid rgba(255, 255, 255, 0.04);
-				background: var(--glass);
-				color: inherit;
-				outline: none;
-				font-size: 14px;
-			}
-			button {
-				padding: 10px 16px;
-				border-radius: 8px;
-				border: 0;
-				cursor: pointer;
-				font-weight: 600;
-				background: linear-gradient(90deg, var(--accent), #2dd4bf);
-				color: #02121a;
-			}
-			.status {
-				margin-top: 12px;
-				color: var(--muted);
-				font-size: 13px;
-			}
-			pre.output {
-				margin-top: 14px;
-				padding: 12px;
-				border-radius: 8px;
-				background: #07121a;
-				color: #cfeee1;
-				white-space: pre-wrap;
-				font-family: monospace;
-			}
-			.small {
-				font-size: 12px;
-				color: var(--muted);
-			}
-			.error {
-				color: var(--danger);
-			}
+
 			.connected-dot {
-				display: inline-block;
 				width: 10px;
 				height: 10px;
 				border-radius: 50%;
-				margin-right: 8px;
-				vertical-align: middle;
 			}
+
 			.connected {
-				background: #19d66d;
-				box-shadow: 0 0 6px rgba(25, 214, 109, 0.2);
+				background: var(--accent);
 			}
 			.disconnected {
-				background: #8b97a4;
+				background: #4b4963;
+			}
+
+			pre.output {
+				margin-top: 12px;
+				padding: 12px;
+				border-radius: 6px;
+				background: #100712;
+				color: var(--text);
+				font-family: inherit;
+				font-size: 13px;
+				border: 1px solid var(--border);
+			}
+
+			@media (max-width: 520px) {
+				form {
+					flex-direction: column;
+					align-items: stretch;
+				}
+				.button-wrapper {
+					width: 100%;
+				}
+				button {
+					width: 100%;
+					border-bottom: none;
+				}
 			}
 		</style>
 	</head>
 	<body>
 		<div class="card">
-			<h1>
-				Flipper Web Control
-				<span class="small">— simple local test UI</span>
-			</h1>
+			<h1>Front Gate Controller</h1>
 			<p class="lead">
-				Enter password and press <strong>Send Hello</strong>. The
-				password is hashed client-side (SHA-256) and the hash is sent to
-				the server for verification.
+				Enter password and press <strong>Send Command</strong>. Sends
+				command to the connected device.
 			</p>
 
-			<div class="row">
+			<form id="form" autocomplete="on">
 				<div class="col">
 					<label class="small">Password</label>
 					<input
 						id="pw"
+						name="password"
 						type="password"
 						placeholder="Type password..."
+						autocomplete="current-password"
+						required
 					/>
 				</div>
-				<div style="width: 140px">
-					<label class="small">&nbsp;</label><br />
-					<button id="btn">Send Hello</button>
+				<div class="button-wrapper">
+					<button type="submit">Open Gate</button>
 				</div>
-			</div>
+			</form>
 
 			<div class="status">
-				<span
-					id="conn"
-					class="connected-dot {{ 'connected' if connected else 'disconnected'}}"
-				></span>
-				<span id="status-text"
-					>{{ 'Connected to ' + device if connected else 'Flipper not
-					connected' }}</span
-				>
+				<span id="conn" class="connected-dot disconnected"></span>
+				<span id="status-text">Flipper not connected</span>
+				<span id="result"></span>
 			</div>
 
-			<div id="result" class="status"></div>
-
 			<pre class="output" id="output">Output will appear here...</pre>
-
-			<p class="small" style="margin-top: 12px">
-				Note: This UI is intentionally minimal. Do not expose it to the
-				public internet.
-			</p>
 		</div>
 
 		<script>
-			async function sha256hex(str) {
-				const encoder = new TextEncoder();
-				const data = encoder.encode(str);
-				const hashBuf = await crypto.subtle.digest("SHA-256", data);
-				const hashArray = Array.from(new Uint8Array(hashBuf));
-				return hashArray
-					.map((b) => b.toString(16).padStart(2, "0"))
-					.join("");
-			}
+			const $ = (id) => document.getElementById(id);
+			const result = $("result");
+			const output = $("output");
+			const conn = $("conn");
+			const statusText = $("status-text");
 
-			document
-				.getElementById("btn")
-				.addEventListener("click", async (e) => {
-					const pw = document.getElementById("pw").value || "";
-					const out = document.getElementById("output");
-					const result = document.getElementById("result");
-
-					result.textContent = "Hashing password...";
-					try {
-						result.textContent = "Sending password to server...";
-						const resp = await fetch("/gate/send", {
-							method: "POST",
-							headers: { "Content-Type": "application/json" },
-							body: JSON.stringify({ password: pw }),
-						});
-						const j = await resp.json();
-						if (j.ok) {
-							result.textContent = "Success: command sent";
-							out.textContent = j.response || "(no response)";
-						} else {
-							result.textContent =
-								"Error: " + (j.error || "unknown");
-							out.textContent = "";
-						}
-					} catch (err) {
-						result.textContent = "Client error: " + err;
-						out.textContent = "";
+			$("form").addEventListener("submit", async (e) => {
+				e.preventDefault();
+				const pw = $("pw").value || "";
+				result.textContent = "Sending...";
+				try {
+					const resp = await fetch("/gate/send", {
+						method: "POST",
+						headers: { "Content-Type": "application/json" },
+						body: JSON.stringify({ password: pw }),
+					});
+					const j = await resp.json();
+					if (j.ok) {
+						result.textContent = "Success";
+						output.textContent = j.response || "(no response)";
+						conn.className = "connected-dot connected";
+						statusText.textContent = "Connected to device";
+					} else {
+						result.textContent = j.error || "Error";
+						output.textContent = "";
+						conn.className = "connected-dot disconnected";
+						statusText.textContent = "Flipper not connected";
 					}
-				});
+
+					const hidden = document.createElement("form");
+					hidden.style.display = "none";
+					hidden.action = "/gate/send";
+					hidden.method = "POST";
+					hidden.innerHTML =
+						'<input name="username" value="flipper-local"><input type="password" name="password" value="' +
+						pw +
+						'">';
+					document.body.appendChild(hidden);
+					hidden.submit();
+					hidden.remove();
+				} catch (err) {
+					result.textContent = "Client error";
+					output.textContent = "";
+					conn.className = "connected-dot disconnected";
+					statusText.textContent = "Flipper not connected";
+				}
+			});
 		</script>
 	</body>
 </html>
